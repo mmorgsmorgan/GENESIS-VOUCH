@@ -75,14 +75,39 @@ seeding needed — members are subjects, not payees.
 
 Pure static — open `frontend/index.html` (or serve the folder). Uses ethers 6.10 (UMD CDN),
 the Ritual chain-switch flow, and reads live per-member totals via `getActiveTotals()` (one
-RPC call, not 988). Cosmic violet/indigo theme carried over from the galaxy.
+RPC call, not ~1000). Members are shown as full-image cards grouped by community role, in a
+warm near-black + vermilion "Sakazuki" editorial theme (Fraunces display serif).
 
 ```bash
 cd frontend && python3 -m http.server 8080   # http://localhost:8080
 ```
+
+## Deploy (Vercel)
+
+The site is fully static; **the app lives in `frontend/`**.
+
+**Dashboard:** vercel.com/new → import this repo → set **Root Directory = `frontend`**,
+Framework preset = **Other**, Build command = *(empty)*, Output dir = `.` → Deploy.
+
+**CLI:**
+```bash
+cd frontend && npx vercel --yes        # first run does a browser login
+```
+
+`frontend/vercel.json` bakes in clean URLs, immutable caching for `avatars/`, and a short
+cache for `members.json`. To point at a freshly deployed contract, edit `CONTRACT_ADDRESS`
+at the top of `frontend/app.js` and redeploy.
+
+## Live deployment
+
+- **Contract:** `0xef99d6BDAF725A54166AA961A4F5165CdF7d5418` on Ritual (chainId 1979)
+- **Roster:** 987 Genesis members, synced from the live source; refresh with
+  `node scripts/fetch-roster.js && node scripts/build-members.js`
 
 ## Status / roadmap
 
 - v1: permissionless weekly `settle()`. Optional: wire the Ritual Scheduler precompile to
   auto-settle each week (hands-off).
 - **Testnet first** — real funds; drive a full round on testnet before mainnet.
+
+Made by BDH.
