@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#050714" />
+<title>Genesis Vouch — stake on who's known</title>
+<meta name="description" content="Vouch native RITUAL on the most known Genesis 1000 member. Every week the winner's backers split the whole pool." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.10.0/ethers.umd.min.js"></script>
+<style>
+  :root{
+    /* Sakazuki-inspired: warm near-black + cream ink + a single vermilion-red accent */
+    --bg:#100c0a; --bg-deep:#070504;
+    --ink:#f3ede2; --ink-dim:#b1a79a; --ink-faint:#6c6458;
+    --violet:#d93a2b; --violet-soft:#ef6a54; --indigo:#a8241a; /* accent = vermilion (names kept so gradients cascade) */
+    --blue:#e0885f; --blue-deep:#a8241a; --cyan:#efe4d3;
+    --pink:#ef6a54; --star:#e6d8c3; --gold:#e8c37a; --green:#4fae7f;
+    --line:rgba(217,58,43,0.20); --line-soft:rgba(243,237,226,0.07);
+    --panel:rgba(22,15,12,0.80); --panel-edge:rgba(217,58,43,0.34);
+    --shadow:0 30px 80px -30px rgba(0,0,0,0.7);
+    --display:"Fraunces", Georgia, "Times New Roman", serif;
+    --body:"Inter", ui-sans-serif, system-ui, sans-serif;
+    --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --edge:2px; /* global corner radius — sharp/editorial */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(ellipse at 50% -10%, #241512 0%, #130d0a 45%, #070504 100%);background-attachment:fixed}
+  a{color:var(--violet-soft);text-decoration:none}
+  button{font-family:var(--body);cursor:pointer;border:none}
+  .mono{font-family:var(--mono)}
+  .display{font-family:var(--display);letter-spacing:-0.01em}
+
+  /* starfield */
+  .stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.32;
+    background-image:radial-gradient(1px 1px at 20% 30%,#f3ede2,transparent),radial-gradient(1px 1px at 70% 60%,#e8c37a,transparent),radial-gradient(1px 1px at 40% 80%,#ef6a54,transparent),radial-gradient(2px 2px at 85% 20%,#f3ede2,transparent),radial-gradient(1px 1px at 15% 70%,#d9b98f,transparent);
+    background-repeat:repeat;background-size:560px 560px;animation:drift 140s linear infinite}
+  @keyframes drift{to{background-position:520px 520px}}
+
+  .wrap{position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:0 22px 80px}
+
+  /* header */
+  header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    padding:16px 22px;backdrop-filter:blur(14px);background:linear-gradient(180deg,rgba(16,12,10,.9),rgba(16,12,10,.45));border-bottom:1px solid var(--line-soft)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .logo{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--violet-soft),var(--violet) 48%,#4a130c 100%);box-shadow:0 0 22px rgba(217,58,43,.55)}
+  .brand h1{font-family:var(--display);font-size:19px;font-weight:600;margin:0;letter-spacing:.02em;font-style:italic}
+  .brand small{display:block;color:var(--ink-faint);font-size:10px;letter-spacing:.32em;font-family:var(--mono)}
+  .hbtns{display:flex;gap:10px;align-items:center}
+  .net{font-family:var(--mono);font-size:11px;color:var(--ink-dim);padding:6px 10px;border:1px solid var(--line);border-radius:var(--edge);display:flex;gap:7px;align-items:center}
+  .net .dot{width:7px;height:7px;border-radius:50%;background:#555}
+  .net.ok .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+  .btn{font-family:var(--mono);font-size:13px;font-weight:600;padding:10px 16px;border-radius:var(--edge);color:var(--ink);background:linear-gradient(135deg,rgba(217,58,43,.24),rgba(232,195,122,.12));border:1px solid var(--panel-edge);transition:.18s}
+  .btn:hover{border-color:var(--violet-soft);box-shadow:0 0 22px -4px var(--violet)}
+  .btn.solid{background:linear-gradient(135deg,var(--violet),var(--indigo));color:#fff;border:none}
+  .btn.solid:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+  /* hero */
+  .hero{margin:34px 0 18px;text-align:center}
+  .hero .eyebrow{font-family:var(--mono);color:var(--violet-soft);letter-spacing:.4em;font-size:11px;text-transform:uppercase}
+  .hero h2{font-family:var(--display);font-weight:600;font-size:clamp(34px,6.4vw,66px);margin:10px 0 10px;line-height:1.0;letter-spacing:-.02em;
+    font-variation-settings:"opsz" 144;color:var(--ink)}
+  .hero h2 em{font-style:italic;font-weight:500;
+    background:linear-gradient(100deg,var(--violet-soft),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--ink-dim);max-width:640px;margin:0 auto;font-size:15px;line-height:1.6}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--edge);padding:16px 18px;text-align:left}
+  .stat .k{font-family:var(--mono);color:var(--ink-faint);font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+  .stat .v{font-family:var(--display);font-size:27px;font-weight:600;margin-top:8px;letter-spacing:-.01em;font-variation-settings:"opsz" 40}
+  .stat .v small{font-size:12px;color:var(--ink-dim);font-family:var(--mono);font-weight:400}
+  .stat.leader{grid-column:span 1;display:flex;gap:12px;align-items:center}
+  .stat.leader img{width:46px;height:46px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;box-shadow:0 0 20px rgba(250,240,208,.4)}
+  .stat.leader .who{font-family:var(--display);font-size:15px;line-height:1.1}
+  .stat.leader .amt{font-family:var(--mono);color:var(--gold);font-size:13px;margin-top:3px}
+
+  /* settle banner */
+  .settle-banner{display:none;margin:8px 0 22px;padding:14px 18px;border-radius:var(--edge);align-items:center;justify-content:space-between;
+    background:linear-gradient(135deg,rgba(232,195,122,.14),rgba(217,58,43,.08));border:1px solid rgba(232,195,122,.42)}
+  .settle-banner.show{display:flex}
+  .settle-banner b{font-family:var(--display)}
+
+  /* controls */
+  .controls{display:flex;gap:12px;align-items:center;margin:18px 0 16px;flex-wrap:wrap}
+  .search{flex:1;min-width:220px;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:var(--edge);padding:10px 14px}
+  .search input{flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-family:var(--body);font-size:14px}
+  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--edge);overflow:hidden}
+  .seg button{background:transparent;color:var(--ink-dim);padding:10px 14px;font-family:var(--mono);font-size:12px}
+  .seg button.active{background:linear-gradient(135deg,rgba(217,58,43,.3),rgba(232,195,122,.16));color:#fff}
+
+  /* role sections */
+  .rolesec{margin:34px 0 4px;display:flex;align-items:center;gap:14px}
+  .rolesec .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 12px currentColor;flex:none}
+  .rolesec h3{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:0;white-space:nowrap}
+  .rolesec .rule{flex:1;height:1px;background:linear-gradient(90deg,currentColor,transparent);opacity:.35}
+  .rolesec .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.14em}
+
+  /* grid — full-bleed portrait cards */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:16px;margin-bottom:12px}
+  .card{--rc:#9a9bc7;position:relative;aspect-ratio:4/5;border-radius:var(--edge);overflow:hidden;cursor:pointer;
+    border:2px solid color-mix(in srgb,var(--rc) 62%,transparent);
+    box-shadow:0 8px 26px -12px rgba(0,0,0,.8), inset 0 0 0 1px rgba(255,255,255,.04);
+    transition:transform .28s cubic-bezier(.2,.7,.2,1),box-shadow .28s,border-color .28s}
+  .card:hover{transform:translateY(-5px);border-color:var(--rc);box-shadow:0 18px 40px -14px color-mix(in srgb,var(--rc) 60%,transparent),0 0 0 1px var(--rc)}
+  .card img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#1c1310;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+  .card:hover img.bg{transform:scale(1.07)}
+  .card .scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(3,2,10,.94) 0%,rgba(3,2,10,.72) 26%,rgba(3,2,10,.12) 54%,transparent 72%)}
+  .card .rank{position:absolute;top:9px;left:10px;font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;
+    padding:3px 7px;border-radius:var(--edge);background:rgba(3,2,10,.55);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.12);letter-spacing:.06em}
+  .card .rolepill{position:absolute;top:9px;right:10px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--rc);padding:3px 8px;border-radius:var(--edge);background:rgba(3,2,10,.55);backdrop-filter:blur(4px);border:1px solid color-mix(in srgb,var(--rc) 55%,transparent)}
+  .card .info{position:absolute;left:0;right:0;bottom:0;padding:12px 13px 13px}
+  .card .name{font-family:var(--display);font-size:15px;font-weight:700;line-height:1.12;color:#fff;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+  .card .handle{font-family:var(--mono);font-size:10.5px;color:rgba(231,230,255,.62);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card .vouched{margin-top:9px;display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+  .card .vouched .lab{font-family:var(--mono);font-size:9px;color:rgba(231,230,255,.5);text-transform:uppercase;letter-spacing:.14em}
+  .card .vouched .num{font-family:var(--display);font-size:16px;font-weight:700;color:#fff}
+  .card .vbtn{margin-top:10px;width:100%;padding:8px;border-radius:var(--edge);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;
+    color:#04030c;background:color-mix(in srgb,var(--rc) 92%,#fff);opacity:0;transform:translateY(6px);transition:.24s}
+  .card:hover .vbtn,.card:focus-within .vbtn{opacity:1;transform:translateY(0)}
+  .card.iswinner{border-color:var(--gold);box-shadow:0 0 34px -6px rgba(250,240,208,.6),0 0 0 1px var(--gold)}
+  .card .crown{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:15px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));z-index:2}
+  @media(hover:none){.card .vbtn{opacity:1;transform:none}}
+  @media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr);gap:12px}}
+
+  /* modal / drawer */
+  .scrim{position:fixed;inset:0;z-index:40;background:rgba(7,5,4,.74);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+  .scrim.show{display:flex}
+  .modal{width:min(420px,92vw);background:linear-gradient(180deg,#1a1210,#0f0a08);border:1px solid var(--panel-edge);border-radius:var(--edge);padding:24px;box-shadow:var(--shadow)}
+  .modal h3{font-family:var(--display);margin:0 0 4px}
+  .modal .mmember{display:flex;gap:12px;align-items:center;margin:16px 0}
+  .modal .mmember img{width:54px;height:54px;border-radius:50%;border:2px solid var(--violet)}
+  .field{margin:16px 0 8px}
+  .field label{font-family:var(--mono);font-size:11px;color:var(--ink-dim);letter-spacing:.14em;text-transform:uppercase}
+  .field .inputrow{margin-top:8px;display:flex;align-items:center;background:#0b0706;border:1px solid var(--line);border-radius:var(--edge);padding:12px 14px}
+  .field input{flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-family:var(--mono);font-size:18px}
+  .field .unit{font-family:var(--mono);color:var(--violet-soft);font-size:13px}
+  .chips{display:flex;gap:8px;margin-top:10px}
+  .chips button{flex:1;padding:8px;border-radius:var(--edge);background:rgba(217,58,43,.1);border:1px solid var(--line);color:var(--ink-dim);font-family:var(--mono);font-size:12px}
+  .chips button:hover{color:#fff;border-color:var(--violet-soft)}
+  .modal .actions{display:flex;gap:10px;margin-top:20px}
+  .modal .actions .btn{flex:1;justify-content:center;text-align:center}
+  .note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:12px;line-height:1.6}
+
+  /* wallet drawer */
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(400px,94vw);z-index:45;background:linear-gradient(180deg,#160f0c,#0a0706);border-left:1px solid var(--panel-edge);transform:translateX(100%);transition:.28s;overflow-y:auto;padding:22px}
+  .drawer.show{transform:translateX(0)}
+  .drawer h3{font-family:var(--display);margin:0 0 2px}
+  .drawer .addr{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-bottom:18px;word-break:break-all}
+  .drawer .sec{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);margin:20px 0 10px}
+  .row{display:flex;gap:11px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--edge);padding:11px 13px;margin-bottom:9px}
+  .row img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+  .row .rn{font-family:var(--display);font-size:13px}
+  .row .rs{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .row .right{margin-left:auto;text-align:right}
+  .row .claim{padding:7px 12px;border-radius:var(--edge);font-family:var(--mono);font-size:11px;font-weight:600;color:#04120b;background:var(--green)}
+  .row .claim:disabled{background:#243;color:#8fb}
+  .empty{font-family:var(--mono);font-size:12px;color:var(--ink-faint);padding:8px 2px}
+  .drawerclose{position:absolute;top:16px;right:18px;background:transparent;color:var(--ink-dim);font-size:20px}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120%);z-index:60;background:#1a1210;border:1px solid var(--panel-edge);border-radius:var(--edge);padding:13px 20px;font-family:var(--mono);font-size:13px;box-shadow:var(--shadow);transition:.3s;max-width:90vw}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .toast.err{border-color:var(--pink);color:#ffd7ec}
+  .toast.ok{border-color:var(--green);color:#d7ffe9}
+
+  footer{margin-top:60px;text-align:center;color:var(--ink-faint);font-family:var(--mono);font-size:11px;line-height:1.8}
+  footer .madeby{color:var(--violet-soft);letter-spacing:.28em;text-transform:uppercase;margin-top:6px;font-size:10px}
+
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div><h1>GENESIS&nbsp;VOUCH</h1><small>RITUAL · GENESIS 1000</small></div>
+  </div>
+  <div class="hbtns">
+    <div class="net" id="net"><span class="dot"></span><span id="netLabel">read-only</span></div>
+    <button class="btn ghost" id="myBtn" style="display:none">My Vouches</button>
+    <button class="btn solid" id="connectBtn">Connect Wallet</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Stake on who's known</div>
+    <h2>Vouch for the<br>most <em>legendary</em> human.</h2>
+    <p>Stake native RITUAL on any Genesis&nbsp;1000 member you know from the community. Every week the most-vouched member wins — and the wallets that vouched for them split the entire pool. Back the right legend, win everyone else's stake.</p>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="k">Round</div><div class="v" id="sRound">—</div></div>
+    <div class="stat"><div class="k">Closes in</div><div class="v" id="sTimer">—</div></div>
+    <div class="stat"><div class="k">Total pot</div><div class="v" id="sPot">— <small>R</small></div></div>
+    <div class="stat leader" id="sLeaderCard">
+      <img id="sLeaderImg" src="" alt="" onerror="this.style.visibility='hidden'"/>
+      <div><div class="k">Current leader</div><div class="who" id="sLeaderName">no vouches yet</div><div class="amt" id="sLeaderAmt"></div></div>
+    </div>
+  </section>
+
+  <div class="settle-banner" id="settleBanner">
+    <div><b>Round over.</b> &nbsp;Anyone can settle it and start the next one.</div>
+    <button class="btn solid" id="settleBtn">Settle round</button>
+  </div>
+
+  <div class="controls">
+    <div class="search">🔎<input id="search" placeholder="Search by name or handle…"/></div>
+    <div class="seg" id="sortSeg">
+      <button data-sort="role" class="active">By role</button>
+      <button data-sort="vouched">Most vouched</button>
+      <button data-sort="name">Name</button>
+    </div>
+  </div>
+
+  <div id="grid"></div>
+
+  <footer>
+    <div>GENESIS VOUCH · native RITUAL on Ritual Chain</div>
+    <div class="madeby">made by BDH</div>
+  </footer>
+</div>
+
+<!-- vouch modal -->
+<div class="scrim" id="vouchScrim">
+  <div class="modal">
+    <h3>Vouch</h3>
+    <div class="mmember">
+      <img id="vImg" src="" alt=""/>
+      <div><div class="display" id="vName" style="font-size:16px"></div><div class="handle mono" id="vHandle" style="color:var(--ink-faint);font-size:12px"></div><span class="role" id="vRole"></span></div>
+    </div>
+    <div class="field">
+      <label>Amount (RITUAL)</label>
+      <div class="inputrow"><input id="vAmt" type="number" min="0.001" step="0.001" placeholder="0.0"/><span class="unit">R</span></div>
+      <div class="chips"><button data-a="0.5">0.5</button><button data-a="1">1</button><button data-a="5">5</button><button data-a="10">10</button></div>
+    </div>
+    <div class="note" id="vNote">Your stake is locked for the round. If this member wins, you split the pot pro-rata. If they lose, your stake goes to the winner's backers.</div>
+    <div class="actions">
+      <button class="btn ghost" id="vCancel">Cancel</button>
+      <button class="btn solid" id="vConfirm">Confirm vouch</button>
+    </div>
+  </div>
+</div>
+
+<!-- wallet drawer -->
+<div class="drawer" id="drawer">
+  <button class="drawerclose" id="drawerClose">×</button>
+  <h3>My Wallet</h3>
+  <div class="addr" id="dAddr"></div>
+  <div class="sec">Active vouches — round <span id="dRound"></span></div>
+  <div id="dActive"><div class="empty">No vouches this round yet.</div></div>
+  <div class="sec">Claimable rewards</div>
+  <div id="dClaims"><div class="empty">Nothing to claim.</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

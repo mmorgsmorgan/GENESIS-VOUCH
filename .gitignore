@@ -1,0 +1,19 @@
+# Secrets — never commit signing material
+.env
+.env.*
+!.env.example
+**/cache/*.json
+contracts/cache/
+
+# Foundry build output
+contracts/out/
+contracts/broadcast/**/dry-run/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# local backups
+data/holders.pre-repull.json

@@ -1,0 +1,9 @@
+# Foundry
+out/
+cache/
+broadcast/**/dry-run/
+
+# Secrets — forge writes the deploy key into cache/ (already ignored above) and .env
+.env
+.env.*
+!.env.example
